@@ -1,0 +1,18 @@
+{
+    "name": "safan-lab/auth",
+    "type": "library",
+    "description": "Authentication Library",
+    "keywords": ["memcached", "authentication", "login", "safan", "user"],
+    "homepage": "http://www.safanlab.com",
+    "license": "MIT",
+    "authors": [
+        {
+            "name": "Safan Lab",
+            "homepage": "http://www.safanlab.com"
+        }
+    ],
+    "require": {
+        "php": ">=5.3.3",
+        "safan-lab/gap": "1.0.*"
+    }
+}

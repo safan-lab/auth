@@ -1,0 +1,320 @@
+<?php
+namespace Authentication\Drivers;
+
+use Authentication\Classes\AuthBase;
+use Authentication\DependencyInjection\Configuration;
+use Authentication\Exceptions\ClientDataException;
+use Authentication\Exceptions\MemcacheNotFoundException;
+use Authentication\Classes\MemcacheBase;
+use Authentication\Model\UserBase;
+use Safan\Safan;
+
+class MemcacheAuth extends AuthBase
+{
+    /**
+     * @var string
+     */
+    private $hashKey;
+
+    /**
+     * User id, by default 0 (no authenticated)
+     *
+     * @var
+     */
+    private $userID = 0;
+
+    /**
+     * Remember property for login
+     *
+     * @var bool
+     */
+    private $isRemember = false;
+
+    /**
+     * Cookie Hash name
+     *
+     * @var string
+     */
+    private $cookieHashPrefix = 'ma_chp';
+
+    /**
+     * Cookie Hash name
+     *
+     * @var string
+     */
+    private $cookieUserIDPrefix = 'ma_c_id';
+
+    /**
+     * Memcache user prefix
+     * Full key e.g. - $this->hashKey . 'mem_user_1'
+     *
+     * @var string
+     */
+    private $memcacheUserPrefix = '_mem_user';
+
+    /**
+     * Memcache key timeout (1 day)
+     */
+    const MEMCACHE_CODE_TIMEOUT = 50400;
+
+    /**
+     * Cookie timeout for remember (1 year)
+     */
+    const COOKIE_LONG_DATE = 31536000;
+
+    /**
+     * Cookie actually timeout  (3 day)
+     */
+    const COOKIE_SHORT_DATE = 151200;
+
+    /**
+     * @param Configuration $config
+     * @throws MemcacheNotFoundException
+     */
+    public function __construct(Configuration $config){
+        if(!class_exists('Memcache'))
+            throw new MemcacheNotFoundException();
+
+        $memcache = new MemcacheBase();
+        // save into object manager
+        $objectManager = Safan::handler()->getObjectManager();
+        $objectManager->setObject('memcache', $memcache);
+        // set hash
+        $this->hashKey = $config->getHashKey();
+    }
+
+    /**
+     * @param $email
+     * @param $password
+     * @param bool $rememberMe
+     * @return mixed|void
+     */
+    public function login($email, $password, $rememberMe = true){
+        // get model and find user
+        $userModel = UserBase::instance();
+        $user = $userModel->where(array('email' => $email))->runOnce();
+
+        if(is_null($user))
+            return false;
+
+        $dbPassword = hash('sha256', $password);
+
+        if($dbPassword !== $user->password)
+            return false;
+
+        $this->userID        = $user->id;
+        $user->lastLoginDate = new \DateTime();
+
+        $this->updateHash($user);
+
+        return true;
+    }
+
+    /**
+     * Logout
+     *
+     * @return bool
+     */
+    public function logout(){
+        if($this->isGuest())
+            return false;
+        // get instances
+        $cookieObj      = Safan::handler()->getObjectManager()->get('cookie');
+        $memcacheObj  = Safan::handler()->getObjectManager()->get('memcache');
+        $userModel = UserBase::instance();
+        // from cookie
+        $cookieObj->remove($this->cookieUserIDPrefix);
+        $cookieObj->remove($this->cookieHashPrefix);
+        // from memcache
+        $memcacheObj->remove($this->getMemcacheKey($this->userID));
+        // from db
+        $userData = $userModel->findByPK($this->userID);
+        if(!is_null($userData)){
+            $userData->hash = '';
+            $userModel->save($userData);
+        }
+
+        return true;
+    }
+
+    /**
+     * Get authenticated user id
+     *
+     * @return mixed
+     */
+    public function getUserID(){
+        return $this->userID;
+    }
+
+    /**
+     * Check Authenticated status from applications
+     *
+     * @return bool
+     */
+    public function isGuest(){
+        if($this->userID > 0)
+            return false;
+
+        return true;
+    }
+
+    /**
+     * Check Status
+     *
+     * @return bool
+     */
+    public function checkStatus(){
+        if($this->checkByCookieAndMemcache())
+            return true;
+        elseif($this->checkByCookieAndDatabase())
+            return true;
+
+        return false;
+    }
+
+    /**
+     * Check Cookie and Memcache cache
+     *
+     * @return bool
+     */
+    private function checkByCookieAndMemcache(){
+        // get cookie
+        $cookieObj      = Safan::handler()->getObjectManager()->get('cookie');
+        $cookieUserID   = $cookieObj->get($this->cookieUserIDPrefix);
+        $cookieUserHash = $cookieObj->get($this->cookieHashPrefix);
+        // check cookies
+        if(!$cookieUserID || !$cookieUserHash)
+            return false;
+        // get memcache
+        $memcacheObj  = Safan::handler()->getObjectManager()->get('memcache');
+        $memcacheKey  = $this->getMemcacheKey($cookieUserID);
+        $memcacheData = $memcacheObj->get($memcacheKey);
+        // check memcache
+        if(!$memcacheData)
+            return false;
+
+        return $this->compareHashes($cookieUserHash, $memcacheData[$this->cookieHashPrefix], $cookieUserID);
+    }
+
+    /**
+     * Check Cookie and Database cache
+     *
+     * @return bool
+     */
+    private function checkByCookieAndDatabase(){
+        // get cookie
+        $cookieObj      = Safan::handler()->getObjectManager()->get('cookie');
+        $cookieUserID   = $cookieObj->get($this->cookieUserIDPrefix);
+        $cookieUserHash = $cookieObj->get($this->cookieHashPrefix);
+        // check cookies
+        if(!$cookieUserID || !$cookieUserHash)
+            return false;
+        // get user model and data
+        $userModel = UserBase::instance();
+        $userData = $userModel->findByPK($cookieUserID);
+        // check record
+        if(is_null($userData))
+            return false;
+
+        $compareResult = $this->compareHashes($cookieUserHash, $userData->hash, $cookieUserID);
+        if($compareResult)
+            $this->updateHash($userData);
+
+        return $compareResult;
+    }
+
+    /**
+     * Compare cookie and original hash data
+     *
+     * @param $cookieHash
+     * @param $originalHash
+     * @param $userID
+     * @return bool
+     */
+    private function compareHashes($cookieHash, $originalHash, $userID){
+        // get client data
+        $ip      = $this->getClientIp();
+        $browser = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
+        // check client data
+        if($ip <= 0 || !$browser)
+            return false;
+        // generate cookie compare hash
+        $cookieHashForCompare = hash('sha256', $ip . $browser . $cookieHash . $userID);
+        // compare
+        if($cookieHashForCompare === $originalHash){
+            $this->userID = $userID;
+            return true;
+        }
+
+        return false;
+    }
+
+    /**
+     * Update hashes
+     *
+     * @param $userData
+     * @throws \Authentication\Exceptions\ClientDataException
+     */
+    private function updateHash($userData){
+        // get client data
+        $ip      = $this->getClientIp();
+        $browser = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
+        // check client data
+        if($ip <= 0 || !$browser)
+            throw new ClientDataException();
+
+        // generate cookie cache
+        $cHash = hash('sha256', $userData->email . $this->hashKey . $userData->password . time());
+        // generate hash for db and memcache
+        $oHash = hash('sha256', $ip . $browser . $cHash . $userData->id);
+
+        // update db hash
+        $userModel = UserBase::instance();
+        $userData->hash = $oHash;
+        $userData->hashCreationDate = new \DateTime();
+        $userModel->save($userData);
+
+        // update memcache hash
+        $memcacheObj  = Safan::handler()->getObjectManager()->get('memcache');
+        $memcacheKey  = $this->getMemcacheKey($userData->id);
+        $memcacheData = array('id' => $userData->id, $this->cookieHashPrefix => $oHash);
+        $memcacheObj->set($memcacheKey, $memcacheData, self::MEMCACHE_CODE_TIMEOUT);
+
+        // update cookie hash
+        $cookieObj = Safan::handler()->getObjectManager()->get('cookie');
+        if($this->isRemember)
+            $cookieDate = time() + self::COOKIE_LONG_DATE;
+        else
+            $cookieDate = time() + self::COOKIE_SHORT_DATE;
+        $cookieObj->set($this->cookieUserIDPrefix, $userData->id, $cookieDate, '/', null, null, true);
+        $cookieObj->set($this->cookieHashPrefix, $cHash, $cookieDate, '/', null, null, true);
+    }
+
+    /**
+     * Get Client IP address, integer
+     *
+     * @return int|string
+     */
+    private function getClientIp(){
+        if(!isset($_SERVER['REMOTE_ADDR']))
+            return 0;
+
+        $ip = ip2long($_SERVER['REMOTE_ADDR']);
+        if(($ip != -1) && ($ip !== false))
+            $lastLoginIp = sprintf('%u', $ip);
+        else
+            $lastLoginIp = 0;
+
+        return $lastLoginIp;
+    }
+
+    /**
+     * Generate key name and return
+     *
+     * @param $userID
+     * @return string
+     */
+    private function getMemcacheKey($userID){
+        return $this->hashKey . $this->memcacheUserPrefix . '_' . $userID;
+    }
+}
