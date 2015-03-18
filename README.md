@@ -4,6 +4,7 @@ Authentication Module for Safan Framework
 REQUIREMENTS
 ------------
 PHP > 5.3.0
+
 safan-lab/gap >= 1.0
 
 SETUP
