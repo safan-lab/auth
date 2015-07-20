@@ -13,6 +13,6 @@
     ],
     "require": {
         "php": ">=5.3.3",
-        "safan-lab/gap": "1.0.*"
+        "gap-db/orm": "1.0.*"
     }
 }
