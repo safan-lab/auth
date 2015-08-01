@@ -10,6 +10,7 @@ safan-lab/gap >= 1.0
 SETUP
 ------------
 
+Enable "memcache" from Safan main config
 If you're using [Composer](http://getcomposer.org/) for your project's dependencies, add the following to your "composer.json":
 
 ```

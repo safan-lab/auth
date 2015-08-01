@@ -5,7 +5,6 @@ use Authentication\Classes\AuthBase;
 use Authentication\DependencyInjection\Configuration;
 use Authentication\Exceptions\ClientDataException;
 use Authentication\Exceptions\MemcacheNotFoundException;
-use Authentication\Classes\MemcacheBase;
 use Authentication\Model\UserBase;
 use Safan\Safan;
 
@@ -75,10 +74,6 @@ class MemcacheAuth extends AuthBase
         if(!class_exists('Memcache'))
             throw new MemcacheNotFoundException();
 
-        $memcache = new MemcacheBase();
-        // save into object manager
-        $objectManager = Safan::handler()->getObjectManager();
-        $objectManager->setObject('memcache', $memcache);
         // set hash
         $this->hashKey = $config->getHashKey();
     }
