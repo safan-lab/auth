@@ -312,4 +312,16 @@ class MemcacheAuth extends AuthBase
     private function getMemcacheKey($userID){
         return $this->hashKey . $this->memcacheUserPrefix . '_' . $userID;
     }
+
+    /**
+     * Return Data in memcache
+     *
+     * @return mixed
+     */
+    public function getCurrentUserCache(){
+        // get memcache object instance
+        $memcache = Safan::handler()->getObjectManager()->get('memcache');
+
+        return $memcache->get($this->getMemcacheKey($this->userID));
+    }
 }
