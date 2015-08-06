@@ -324,4 +324,16 @@ class MemcacheAuth extends AuthBase
 
         return $memcache->get($this->getMemcacheKey($this->userID));
     }
+
+    /**
+     * Return Key in memcache
+     *
+     * @return bool|string
+     */
+    public function getCurrentUserCacheKey(){
+        if($this->userID > 0)
+            return $this->hashKey . $this->memcacheUserPrefix . '_' . $this->userID;
+
+        return false;
+    }
 }
