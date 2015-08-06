@@ -16,6 +16,11 @@ class MemcacheAuth extends AuthBase
     private $hashKey;
 
     /**
+     * @var bool
+     */
+    private $crossDomain = false;
+
+    /**
      * User id, by default 0 (no authenticated)
      *
      * @var
@@ -75,7 +80,8 @@ class MemcacheAuth extends AuthBase
             throw new MemcacheNotFoundException();
 
         // set hash
-        $this->hashKey = $config->getHashKey();
+        $this->hashKey     = $config->getHashKey();
+        $this->crossDomain = $config->getCrossDomain();
     }
 
     /**
@@ -281,8 +287,13 @@ class MemcacheAuth extends AuthBase
             $cookieDate = time() + self::COOKIE_LONG_DATE;
         else
             $cookieDate = time() + self::COOKIE_SHORT_DATE;
-        $cookieObj->set($this->cookieUserIDPrefix, $userData->id, $cookieDate, '/', null, null, true);
-        $cookieObj->set($this->cookieHashPrefix, $cHash, $cookieDate, '/', null, null, true);
+
+        $domain = null;
+        if($this->crossDomain)
+            $domain = '.' . substr(Safan::handler()->baseUrl, strpos(Safan::handler()->baseUrl, '://') + 3);
+
+        $cookieObj->set($this->cookieUserIDPrefix, $userData->id, $cookieDate, '/', $domain, null, true);
+        $cookieObj->set($this->cookieHashPrefix, $cHash, $cookieDate, '/', $domain, null, true);
     }
 
     /**
