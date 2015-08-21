@@ -5,7 +5,7 @@ REQUIREMENTS
 ------------
 PHP > 5.3.0
 
-safan-lab/gap >= 1.0
+gap-orm/gap >= 1.0
 
 SETUP
 ------------
@@ -15,6 +15,6 @@ If you're using [Composer](http://getcomposer.org/) for your project's dependenc
 
 ```
 "require": {
-    "safan-lab/auth": "1.0.0-BETA"
+    "safan-lab/auth": "1.0.*"
 }
 ```
