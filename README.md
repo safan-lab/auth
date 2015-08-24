@@ -4,8 +4,8 @@ Authentication Module for Safan Framework
 REQUIREMENTS
 ------------
 ```
-PHP > 5.3.0
-gap-orm/gap >= 1.0
+PHP > 5.4.0
+gap-orm/gap >= 1.*
 ```
 
 SETUP
@@ -16,7 +16,7 @@ If you're using [Composer](http://getcomposer.org/) for your project's dependenc
 
 ```
 "require": {
-    "safan-lab/auth": "1.0.*"
+    "safan-lab/auth": "1.*"
 }
 ```
 
@@ -36,7 +36,7 @@ return [
 Add Configuration - safan-framework-standard/application/Settings/main.config.php
 ```
 <?php
-'init' => array(
+'init' => [
     ...
     'auth' => [
         'class'  => 'Authentication\AuthManager',
@@ -48,5 +48,5 @@ Add Configuration - safan-framework-standard/application/Settings/main.config.ph
         ]
     ],
     ...
-)
+]
 ```

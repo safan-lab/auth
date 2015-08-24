@@ -101,7 +101,7 @@ class MemcacheAuth extends AuthBase
     public function login($email, $password, $rememberMe = true){
         // get model and find user
         $userModel = UserBase::instance();
-        $user = $userModel->where(array('email' => $email))->runOnce();
+        $user = $userModel->where(['email' => $email])->runOnce();
 
         if(is_null($user))
             return false;
@@ -298,7 +298,11 @@ class MemcacheAuth extends AuthBase
         // update memcache hash
         $memcacheObj  = Safan::handler()->getObjectManager()->get('memcache');
         $memcacheKey  = $this->getMemcacheKey($userData->id);
-        $memcacheData = array('id' => $userData->id, $this->cookieHashPrefix => $oHash);
+        $memcacheData = [
+            'id'                    => $userData->id,
+            $this->cookieHashPrefix => $oHash
+        ];
+
         $memcacheObj->set($memcacheKey, $memcacheData, self::MEMCACHE_CODE_TIMEOUT);
 
         // update cookie hash

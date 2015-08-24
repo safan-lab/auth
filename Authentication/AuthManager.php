@@ -20,9 +20,9 @@ class AuthManager
      *
      * @var array
      */
-    private $drivers = array(
+    private $drivers = [
         'memcacheAuth' => 'Authentication\Drivers\MemcacheAuth'
-    );
+    ];
 
     /**
      * Initialize Authentication
