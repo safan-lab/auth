@@ -1,4 +1,12 @@
 <?php
+/**
+ * This file is part of the Safan package.
+ *
+ * (c) Harut Grigoryan <ceo@safanlab.com>
+ *
+ * For the full copyright and license information, please view the LICENSE
+ * file that was distributed with this source code.
+ */
 namespace Authentication\Drivers;
 
 use Authentication\Classes\AuthBase;
@@ -121,8 +129,8 @@ class MemcacheAuth extends AuthBase
             return false;
         // get instances
         $cookieObj      = Safan::handler()->getObjectManager()->get('cookie');
-        $memcacheObj  = Safan::handler()->getObjectManager()->get('memcache');
-        $userModel = UserBase::instance();
+        $memcacheObj    = Safan::handler()->getObjectManager()->get('memcache');
+        $userModel      = UserBase::instance();
         // from cookie
         $cookieObj->remove($this->cookieUserIDPrefix);
         $cookieObj->remove($this->cookieHashPrefix);
@@ -130,6 +138,7 @@ class MemcacheAuth extends AuthBase
         $memcacheObj->remove($this->getMemcacheKey($this->userID));
         // from db
         $userData = $userModel->findByPK($this->userID);
+
         if(!is_null($userData)){
             $userData->hash = '';
             $userModel->save($userData);
@@ -183,13 +192,16 @@ class MemcacheAuth extends AuthBase
         $cookieObj      = Safan::handler()->getObjectManager()->get('cookie');
         $cookieUserID   = $cookieObj->get($this->cookieUserIDPrefix);
         $cookieUserHash = $cookieObj->get($this->cookieHashPrefix);
+
         // check cookies
         if(!$cookieUserID || !$cookieUserHash)
             return false;
+
         // get memcache
         $memcacheObj  = Safan::handler()->getObjectManager()->get('memcache');
         $memcacheKey  = $this->getMemcacheKey($cookieUserID);
         $memcacheData = $memcacheObj->get($memcacheKey);
+
         // check memcache
         if(!$memcacheData)
             return false;
@@ -207,17 +219,21 @@ class MemcacheAuth extends AuthBase
         $cookieObj      = Safan::handler()->getObjectManager()->get('cookie');
         $cookieUserID   = $cookieObj->get($this->cookieUserIDPrefix);
         $cookieUserHash = $cookieObj->get($this->cookieHashPrefix);
+
         // check cookies
         if(!$cookieUserID || !$cookieUserHash)
             return false;
+
         // get user model and data
         $userModel = UserBase::instance();
         $userData = $userModel->findByPK($cookieUserID);
+
         // check record
         if(is_null($userData))
             return false;
 
         $compareResult = $this->compareHashes($cookieUserHash, $userData->hash, $cookieUserID);
+
         if($compareResult)
             $this->updateHash($userData);
 
@@ -236,11 +252,14 @@ class MemcacheAuth extends AuthBase
         // get client data
         $ip      = $this->getClientIp();
         $browser = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
+
         // check client data
         if($ip <= 0 || !$browser)
             return false;
+
         // generate cookie compare hash
         $cookieHashForCompare = hash('sha256', $ip . $browser . $cookieHash . $userID);
+
         // compare
         if($cookieHashForCompare === $originalHash){
             $this->userID = $userID;
@@ -260,6 +279,7 @@ class MemcacheAuth extends AuthBase
         // get client data
         $ip      = $this->getClientIp();
         $browser = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
+
         // check client data
         if($ip <= 0 || !$browser)
             throw new ClientDataException();
@@ -283,12 +303,14 @@ class MemcacheAuth extends AuthBase
 
         // update cookie hash
         $cookieObj = Safan::handler()->getObjectManager()->get('cookie');
+
         if($this->isRemember)
             $cookieDate = time() + self::COOKIE_LONG_DATE;
         else
             $cookieDate = time() + self::COOKIE_SHORT_DATE;
 
         $domain = null;
+
         if($this->crossDomain)
             $domain = '.' . substr(Safan::handler()->baseUrl, strpos(Safan::handler()->baseUrl, '://') + 3);
 
@@ -306,6 +328,7 @@ class MemcacheAuth extends AuthBase
             return 0;
 
         $ip = ip2long($_SERVER['REMOTE_ADDR']);
+
         if(($ip != -1) && ($ip !== false))
             $lastLoginIp = sprintf('%u', $ip);
         else
