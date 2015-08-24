@@ -3,9 +3,10 @@ Authentication Module for Safan Framework
 
 REQUIREMENTS
 ------------
+```
 PHP > 5.3.0
-
 gap-orm/gap >= 1.0
+```
 
 SETUP
 ------------
@@ -17,4 +18,35 @@ If you're using [Composer](http://getcomposer.org/) for your project's dependenc
 "require": {
     "safan-lab/auth": "1.0.*"
 }
+```
+
+Update Modules Config List - safan-framework-standard/application/Settings/modules.config.php
+```
+<?php
+return [
+    // Safan Framework default modules route
+    'Safan'         => 'vendor/safan-lab/safan/Safan',
+    'SafanResponse' => 'vendor/safan-lab/safan/SafanResponse',
+    // Write created or installed modules route here ... e.g. 'FirstModule' => 'application/Modules/FirstModule'
+    'GapOrm'         => 'vendor/gap-db/orm/GapOrm',
+    'Authentication' => 'vendor/safan-lab/auth/Authentication',
+];
+```
+
+Add Configuration - safan-framework-standard/application/Settings/main.config.php
+```
+<?php
+'init' => array(
+    ...
+    'auth' => [
+        'class'  => 'Authentication\AuthManager',
+        'method' => 'init',
+        'params' => [
+            'token'       => 'any_token',
+            'driver'      => 'memcacheAuth',
+            'crossDomain' => false
+        ]
+    ],
+    ...
+)
 ```
