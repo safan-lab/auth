@@ -13,7 +13,7 @@ use Authentication\Classes\AuthBase;
 use Authentication\DependencyInjection\Configuration;
 use Authentication\Exceptions\ClientDataException;
 use Authentication\Exceptions\MemcacheNotFoundException;
-use Authentication\Model\UserBase;
+use Authentication\Models\UserBase;
 use Safan\Safan;
 
 class MemcacheAuth extends AuthBase
