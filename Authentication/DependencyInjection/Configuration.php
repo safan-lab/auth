@@ -22,6 +22,11 @@ class Configuration
     private $crossDomain = false;
 
     /**
+     * @var bool
+     */
+    private $crossDomainUrl = false;
+
+    /**
      * @param $params
      */
     public function buildConfig($params){
@@ -44,5 +49,12 @@ class Configuration
      */
     public function getCrossDomain(){
        return $this->crossDomain;
+    }
+
+    /**
+     * @return bool
+     */
+    public function getCrossDomainUrl(){
+        return $this->crossDomainUrl;
     }
 }

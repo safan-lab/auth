@@ -29,6 +29,11 @@ class MemcacheAuth extends AuthBase
     private $crossDomain = false;
 
     /**
+     * @var bool
+     */
+    private $crossDomainUrl = false;
+
+    /**
      * User id, by default 0 (no authenticated)
      *
      * @var
@@ -80,7 +85,7 @@ class MemcacheAuth extends AuthBase
     const COOKIE_SHORT_DATE = 151200;
 
     /**
-     * @param Configuration $config
+     * @param  Configuration $config
      * @throws MemcacheNotFoundException
      */
     public function __construct(Configuration $config){
@@ -88,8 +93,9 @@ class MemcacheAuth extends AuthBase
             throw new MemcacheNotFoundException();
 
         // set hash
-        $this->hashKey     = $config->getHashKey();
-        $this->crossDomain = $config->getCrossDomain();
+        $this->hashKey        = $config->getHashKey();
+        $this->crossDomain    = $config->getCrossDomain();
+        $this->crossDomainUrl = $config->getCrossDomainUrl();
     }
 
     /**
@@ -315,8 +321,12 @@ class MemcacheAuth extends AuthBase
 
         $domain = null;
 
-        if($this->crossDomain)
-            $domain = '.' . substr(Safan::handler()->baseUrl, strpos(Safan::handler()->baseUrl, '://') + 3);
+        if($this->crossDomain) {
+            if ($this->crossDomainUrl)
+                $domain = '.' . substr($this->crossDomainUrl, strpos(Safan::handler()->baseUrl, '://') + 3);
+            else
+                $domain = '.' . substr(Safan::handler()->baseUrl, strpos(Safan::handler()->baseUrl, '://') + 3);
+        }
 
         $cookieObj->set($this->cookieUserIDPrefix, $userData->id, $cookieDate, '/', $domain, null, true);
         $cookieObj->set($this->cookieHashPrefix, $cHash, $cookieDate, '/', $domain, null, true);
