@@ -323,7 +323,7 @@ class MemcacheAuth extends AuthBase
 
         if($this->crossDomain) {
             if ($this->crossDomainUrl)
-                $domain = '.' . substr($this->crossDomainUrl, strpos(Safan::handler()->baseUrl, '://') + 3);
+                $domain = '.' . $this->crossDomainUrl;
             else
                 $domain = '.' . substr(Safan::handler()->baseUrl, strpos(Safan::handler()->baseUrl, '://') + 3);
         }
