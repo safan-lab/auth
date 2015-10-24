@@ -22,9 +22,9 @@ class Configuration
     private $crossDomain = false;
 
     /**
-     * @var bool
+     * @var string
      */
-    private $crossDomainUrl = false;
+    private $crossDomainUrl = '';
 
     /**
      * @param $params
@@ -35,6 +35,9 @@ class Configuration
 
         if(isset($params['crossDomain']))
             $this->crossDomain = $params['crossDomain'];
+
+        if(isset($params['crossDomainUrl']))
+            $this->crossDomainUrl = $params['crossDomainUrl'];
     }
 
     /**
@@ -52,7 +55,7 @@ class Configuration
     }
 
     /**
-     * @return bool
+     * @return string
      */
     public function getCrossDomainUrl(){
         return $this->crossDomainUrl;

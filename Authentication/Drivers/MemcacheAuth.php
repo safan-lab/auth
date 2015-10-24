@@ -29,9 +29,9 @@ class MemcacheAuth extends AuthBase
     private $crossDomain = false;
 
     /**
-     * @var bool
+     * @var string
      */
-    private $crossDomainUrl = false;
+    private $crossDomainUrl = '';
 
     /**
      * User id, by default 0 (no authenticated)
@@ -322,7 +322,7 @@ class MemcacheAuth extends AuthBase
         $domain = null;
 
         if($this->crossDomain) {
-            if ($this->crossDomainUrl)
+            if (strlen($this->crossDomainUrl) > 0)
                 $domain = '.' . $this->crossDomainUrl;
             else
                 $domain = '.' . substr(Safan::handler()->baseUrl, strpos(Safan::handler()->baseUrl, '://') + 3);
