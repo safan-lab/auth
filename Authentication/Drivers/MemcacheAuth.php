@@ -13,6 +13,8 @@ use Authentication\Classes\AuthBase;
 use Authentication\DependencyInjection\Configuration;
 use Authentication\Exceptions\ClientDataException;
 use Authentication\Exceptions\MemcacheNotFoundException;
+use Authentication\Models\RoleBase;
+use Authentication\Models\RoleGroupBase;
 use Authentication\Models\UserBase;
 use Safan\Safan;
 
@@ -120,7 +122,9 @@ class MemcacheAuth extends AuthBase
         $this->userID        = $user->id;
         $user->lastLoginDate = new \DateTime();
 
-        $this->updateHash($user);
+        $roles = $this->getUserRoles($user);
+
+        $this->updateHash($user, $roles);
 
         return true;
     }
@@ -279,9 +283,10 @@ class MemcacheAuth extends AuthBase
      * Update hashes
      *
      * @param $userData
+     * @param $roles
      * @throws \Authentication\Exceptions\ClientDataException
      */
-    private function updateHash($userData){
+    private function updateHash($userData, $roles){
         // get client data
         $ip      = $this->getClientIp();
         $browser = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
@@ -301,12 +306,22 @@ class MemcacheAuth extends AuthBase
         $userData->hashCreationDate = new \DateTime();
         $userModel->save($userData);
 
+        $memcacheRoles = [];
+        foreach ($roles as $role) {
+            $memcacheRoles[] = [
+                'id'    => $role->id,
+                'alias' => $role->alias,
+                'group' => $role->name,
+            ];
+        }
+
         // update memcache hash
         $memcacheObj  = Safan::handler()->getObjectManager()->get('memcache');
         $memcacheKey  = $this->getMemcacheKey($userData->id);
         $memcacheData = [
             'id'                    => $userData->id,
-            $this->cookieHashPrefix => $oHash
+            $this->cookieHashPrefix => $oHash,
+            'roles'                 => $memcacheRoles
         ];
 
         $memcacheObj->set($memcacheKey, $memcacheData, self::MEMCACHE_CODE_TIMEOUT);
@@ -330,6 +345,26 @@ class MemcacheAuth extends AuthBase
 
         $cookieObj->set($this->cookieUserIDPrefix, $userData->id, $cookieDate, '/', $domain, null, true);
         $cookieObj->set($this->cookieHashPrefix, $cHash, $cookieDate, '/', $domain, null, true);
+    }
+
+    /**
+     * Get user roles
+     *
+     * @param $user
+     * @return mixed
+     */
+    public function getUserRoles($user){
+        // get model and find roles
+        $roleBaseModel = RoleBase::instance();
+
+        return $roleBaseModel
+                    ->join(RoleGroupBase::instance()->table(),
+                           'left',
+                           RoleBase::instance()->table() . '.id = ' . RoleGroupBase::instance()->table() . '.roleID',
+                           RoleGroupBase::instance()->getFields()
+                    )
+                    ->where([RoleGroupBase::instance()->table() . '.userID' => $user->id])
+                    ->run();
     }
 
     /**

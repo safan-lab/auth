@@ -7,12 +7,12 @@
  * For the full copyright and license information, please view the LICENSE
  * file that was distributed with this source code.
  */
-namespace Authentication\Model;
+namespace Authentication\Models;
 
 use GapOrm\Mapper\FieldMapper;
 use GapOrm\Mapper\Model;
 
-class UserBase extends Model
+class RoleGroupBase extends Model
 {
     /**
      * Constructor
@@ -23,19 +23,11 @@ class UserBase extends Model
         $field->noinsert(true);
         $field->noupdate(true);
         $this->addField($field);
-        $field = new FieldMapper($this->table(), 'email', parent::FIELD_TYPE_STR);
+        $field = new FieldMapper($this->table(), 'name', parent::FIELD_TYPE_STR);
         $this->addField($field);
-        $field = new FieldMapper($this->table(), 'username', parent::FIELD_TYPE_STR);
+        $field = new FieldMapper($this->table(), 'userID', parent::FIELD_TYPE_INT);
         $this->addField($field);
-        $field = new FieldMapper($this->table(), 'password', parent::FIELD_TYPE_STR);
-        $this->addField($field);
-        $field = new FieldMapper($this->table(), 'hash', parent::FIELD_TYPE_STR);
-        $this->addField($field);
-        $field = new FieldMapper($this->table(), 'hashCreationDate', parent::FIELD_TYPE_DATETIME);
-        $this->addField($field);
-        $field = new FieldMapper($this->table(), 'creationDate', parent::FIELD_TYPE_DATETIME);
-        $this->addField($field);
-        $field = new FieldMapper($this->table(), 'lastLoginDate', parent::FIELD_TYPE_DATETIME);
+        $field = new FieldMapper($this->table(), 'roleID', parent::FIELD_TYPE_INT);
         $this->addField($field);
     }
 
@@ -53,6 +45,6 @@ class UserBase extends Model
      */
     public function table()
     {
-        return 'users';
+        return 'roleGroups';
     }
 }
