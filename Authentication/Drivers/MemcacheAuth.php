@@ -244,8 +244,10 @@ class MemcacheAuth extends AuthBase
 
         $compareResult = $this->compareHashes($cookieUserHash, $userData->hash, $cookieUserID);
 
-        if($compareResult)
-            $this->updateHash($userData);
+        if($compareResult) {
+            $roles = $this->getUserRoles($userData);
+            $this->updateHash($userData, $roles);
+        }
 
         return $compareResult;
     }
@@ -308,7 +310,7 @@ class MemcacheAuth extends AuthBase
 
         $memcacheRoles = [];
         foreach ($roles as $role) {
-            $memcacheRoles[] = [
+            $memcacheRoles[$role->alias] = [
                 'id'    => $role->id,
                 'alias' => $role->alias,
                 'group' => $role->name,
@@ -365,6 +367,23 @@ class MemcacheAuth extends AuthBase
                     )
                     ->where([RoleGroupBase::instance()->table() . '.userID' => $user->id])
                     ->run();
+    }
+
+    public function hasRole($alias)
+    {
+        if (!$this->userID)
+            return false;
+
+        $memcacheObj = Safan::handler()->getObjectManager()->get('memcache');
+        $memcacheKey = $this->getMemcacheKey($this->userID);
+        $userCache   = $memcacheObj->get($memcacheKey);
+
+        $roles = $userCache['roles'];
+
+        if (isset($roles[$alias]))
+            return true;
+
+        return false;
     }
 
     /**
