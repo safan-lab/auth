@@ -345,8 +345,8 @@ class MemcacheAuth extends AuthBase
                 $domain = '.' . substr(Safan::handler()->baseUrl, strpos(Safan::handler()->baseUrl, '://') + 3);
         }
 
-        $cookieObj->set($this->cookieUserIDPrefix, $userData->id, $cookieDate, '/', $domain, null, true);
-        $cookieObj->set($this->cookieHashPrefix, $cHash, $cookieDate, '/', $domain, null, true);
+        $cookieObj->set($this->cookieUserIDPrefix, $userData->id, $cookieDate, '/', $domain);
+        $cookieObj->set($this->cookieHashPrefix, $cHash, $cookieDate, '/', $domain);
     }
 
     /**
