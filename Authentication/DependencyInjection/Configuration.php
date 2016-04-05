@@ -27,6 +27,11 @@ class Configuration
     private $crossDomainUrl = '';
 
     /**
+     * @var string
+     */
+    private $ipChecker = false;
+
+    /**
      * @param $params
      */
     public function buildConfig($params){
@@ -38,6 +43,9 @@ class Configuration
 
         if(isset($params['crossDomainUrl']))
             $this->crossDomainUrl = $params['crossDomainUrl'];
+
+        if(isset($params['enableIpChecker']) && $params['enableIpChecker'])
+            $this->ipChecker = true;
     }
 
     /**
@@ -59,5 +67,12 @@ class Configuration
      */
     public function getCrossDomainUrl(){
         return $this->crossDomainUrl;
+    }
+
+    /**
+     * @return string
+     */
+    public function isIpCheckerEnabled(){
+        return $this->ipChecker;
     }
 }

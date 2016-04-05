@@ -36,6 +36,11 @@ class MemcacheAuth extends AuthBase
     private $crossDomainUrl = '';
 
     /**
+     * @var boolean
+     */
+    private $ipChecker = false;
+
+    /**
      * User id, by default 0 (no authenticated)
      *
      * @var
@@ -98,6 +103,7 @@ class MemcacheAuth extends AuthBase
         $this->hashKey        = $config->getHashKey();
         $this->crossDomain    = $config->getCrossDomain();
         $this->crossDomainUrl = $config->getCrossDomainUrl();
+        $this->ipChecker      = $config->isIpCheckerEnabled();
     }
 
     /**
@@ -266,7 +272,7 @@ class MemcacheAuth extends AuthBase
         $browser = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
 
         // check client data
-        if($ip <= 0 || !$browser)
+        if(!$browser)
             return false;
 
         // generate cookie compare hash
@@ -294,7 +300,7 @@ class MemcacheAuth extends AuthBase
         $browser = isset($_SERVER['HTTP_USER_AGENT']) ? $_SERVER['HTTP_USER_AGENT'] : false;
 
         // check client data
-        if($ip <= 0 || !$browser)
+        if(!$browser)
             throw new ClientDataException();
 
         // generate cookie cache
@@ -392,6 +398,9 @@ class MemcacheAuth extends AuthBase
      * @return int|string
      */
     private function getClientIp(){
+        if (!$this->ipChecker)
+            return 0;
+
         if(!isset($_SERVER['REMOTE_ADDR']))
             return 0;
 
