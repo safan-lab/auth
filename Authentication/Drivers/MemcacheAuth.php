@@ -13,6 +13,7 @@ use Authentication\Classes\AuthBase;
 use Authentication\DependencyInjection\Configuration;
 use Authentication\Exceptions\ClientDataException;
 use Authentication\Exceptions\MemcacheNotFoundException;
+use Authentication\Models\GroupRoleBase;
 use Authentication\Models\RoleBase;
 use Authentication\Models\RoleGroupBase;
 use Authentication\Models\UserBase;
@@ -366,12 +367,12 @@ class MemcacheAuth extends AuthBase
         $roleBaseModel = RoleBase::instance();
 
         return $roleBaseModel
-                    ->join(RoleGroupBase::instance()->table(),
+                    ->join(GroupRoleBase::instance()->table(),
                            'left',
-                           RoleBase::instance()->table() . '.id = ' . RoleGroupBase::instance()->table() . '.roleID',
-                           RoleGroupBase::instance()->getFields()
+                           RoleBase::instance()->table() . '.id = ' . GroupRoleBase::instance()->table() . '.roleID',
+                           GroupRoleBase::instance()->getFields()
                     )
-                    ->where([RoleGroupBase::instance()->table() . '.userID' => $user->id])
+                    ->where([GroupRoleBase::instance()->table() . '.userID' => $user->id])
                     ->run();
     }
 

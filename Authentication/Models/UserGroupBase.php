@@ -12,7 +12,7 @@ namespace Authentication\Models;
 use GapOrm\Mapper\FieldMapper;
 use GapOrm\Mapper\Model;
 
-class RoleGroupBase extends Model
+class UserGroupBase extends Model
 {
     /**
      * Constructor
@@ -23,11 +23,9 @@ class RoleGroupBase extends Model
         $field->noinsert(true);
         $field->noupdate(true);
         $this->addField($field);
-        $field = new FieldMapper($this->table(), 'name', parent::FIELD_TYPE_STR);
-        $this->addField($field);
         $field = new FieldMapper($this->table(), 'userID', parent::FIELD_TYPE_INT);
         $this->addField($field);
-        $field = new FieldMapper($this->table(), 'roleID', parent::FIELD_TYPE_INT);
+        $field = new FieldMapper($this->table(), 'groupID', parent::FIELD_TYPE_INT);
         $this->addField($field);
     }
 
@@ -45,6 +43,6 @@ class RoleGroupBase extends Model
      */
     public function table()
     {
-        return 'roleGroups';
+        return 'userGroups';
     }
 }
