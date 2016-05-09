@@ -13,10 +13,12 @@ use Authentication\Classes\AuthBase;
 use Authentication\DependencyInjection\Configuration;
 use Authentication\Exceptions\ClientDataException;
 use Authentication\Exceptions\MemcacheNotFoundException;
+use Authentication\Models\GroupBase;
 use Authentication\Models\GroupRoleBase;
 use Authentication\Models\RoleBase;
 use Authentication\Models\RoleGroupBase;
 use Authentication\Models\UserBase;
+use Authentication\Models\UserGroupBase;
 use Safan\Safan;
 
 class MemcacheAuth extends AuthBase
@@ -369,10 +371,15 @@ class MemcacheAuth extends AuthBase
         return $roleBaseModel
                     ->join(GroupRoleBase::instance()->table(),
                            'left',
-                           RoleBase::instance()->table() . '.id = ' . GroupRoleBase::instance()->table() . '.roleID',
+                           $roleBaseModel->table() . '.id = ' . GroupRoleBase::instance()->table() . '.roleID',
                            GroupRoleBase::instance()->getFields()
                     )
-                    ->where([GroupRoleBase::instance()->table() . '.userID' => $user->id])
+                    ->join(UserGroupBase::instance()->table(),
+                           'left',
+                           UserGroupBase::instance()->table() . '.groupID = ' . GroupRoleBase::instance()->table() . '.groupID',
+                           GroupRoleBase::instance()->getFields()
+                    )
+                    ->where([UserGroupBase::instance()->table() . '.userID' => $user->id])
                     ->run();
     }
 
