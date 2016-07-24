@@ -32,6 +32,11 @@ class Configuration
     private $ipChecker = false;
 
     /**
+     * @var string
+     */
+    private $model = '\Authentication\Models\UserBase';
+
+    /**
      * @param $params
      */
     public function buildConfig($params){
@@ -46,6 +51,9 @@ class Configuration
 
         if(isset($params['enableIpChecker']) && $params['enableIpChecker'])
             $this->ipChecker = true;
+
+        if(!empty($params['model']))
+            $this->model = $params['model'];
     }
 
     /**
@@ -74,5 +82,12 @@ class Configuration
      */
     public function isIpCheckerEnabled(){
         return $this->ipChecker;
+    }
+
+    /**
+     * @return string
+     */
+    public function getModel(){
+        return $this->model;
     }
 }

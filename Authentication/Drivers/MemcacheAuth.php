@@ -16,8 +16,6 @@ use Authentication\Exceptions\MemcacheNotFoundException;
 use Authentication\Models\GroupBase;
 use Authentication\Models\GroupRoleBase;
 use Authentication\Models\RoleBase;
-use Authentication\Models\RoleGroupBase;
-use Authentication\Models\UserBase;
 use Authentication\Models\UserGroupBase;
 use Safan\Safan;
 
@@ -42,6 +40,11 @@ class MemcacheAuth extends AuthBase
      * @var boolean
      */
     private $ipChecker = false;
+
+    /**
+     * @var string
+     */
+    private $model = '';
 
     /**
      * User id, by default 0 (no authenticated)
@@ -107,6 +110,7 @@ class MemcacheAuth extends AuthBase
         $this->crossDomain    = $config->getCrossDomain();
         $this->crossDomainUrl = $config->getCrossDomainUrl();
         $this->ipChecker      = $config->isIpCheckerEnabled();
+        $this->model          = $config->getModel();
     }
 
     /**
@@ -117,8 +121,8 @@ class MemcacheAuth extends AuthBase
      */
     public function login($email, $password, $rememberMe = true){
         // get model and find user
-        $userModel = UserBase::instance();
-        $user = $userModel->where(['email' => $email])->runOnce();
+        $userModel = call_user_func([$this->model, 'instance']);
+        $user      = $userModel->where(['email' => $email])->runOnce();
 
         if(is_null($user))
             return false;
@@ -149,7 +153,7 @@ class MemcacheAuth extends AuthBase
         // get instances
         $cookieObj      = Safan::handler()->getObjectManager()->get('cookie');
         $memcacheObj    = Safan::handler()->getObjectManager()->get('memcache');
-        $userModel      = UserBase::instance();
+        $userModel      = call_user_func(array($this->model, 'instance'));;
         // from cookie
         $cookieObj->remove($this->cookieUserIDPrefix);
         $cookieObj->remove($this->cookieHashPrefix);
@@ -244,7 +248,7 @@ class MemcacheAuth extends AuthBase
             return false;
 
         // get user model and data
-        $userModel = UserBase::instance();
+        $userModel = call_user_func(array($this->model, 'instance'));;
         $userData = $userModel->findByPK($cookieUserID);
 
         // check record
@@ -312,7 +316,7 @@ class MemcacheAuth extends AuthBase
         $oHash = hash('sha256', $ip . $browser . $cHash . $userData->id);
 
         // update db hash
-        $userModel = UserBase::instance();
+        $userModel = call_user_func(array($this->model, 'instance'));
         $userData->hash = $oHash;
         $userData->hashCreationDate = new \DateTime();
         $userModel->save($userData);
