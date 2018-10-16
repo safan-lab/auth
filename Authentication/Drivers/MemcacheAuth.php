@@ -459,4 +459,12 @@ class MemcacheAuth extends AuthBase
 
         return false;
     }
+
+    /**
+     * @param $url
+     */
+    public function setCrossDomainUrl($url)
+    {
+        $this->crossDomainUrl = $url;
+    }
 }
