@@ -117,12 +117,20 @@ class MemcacheAuth extends AuthBase
      * @param $email
      * @param $password
      * @param bool $rememberMe
-     * @return mixed|void
+     * @param array $alternativeParams
+     * @return bool
      */
-    public function login($email, $password, $rememberMe = true){
+    public function login($email, $password, $rememberMe = true, $alternativeParams = []){
         // get model and find user
         $userModel = call_user_func([$this->model, 'instance']);
-        $user      = $userModel->where(['email' => $email])->runOnce();
+
+        $where = ['email' => $email];
+
+        if (!empty($alternativeParams)) {
+            $where = array_merge($where, $alternativeParams);
+        }
+
+        $user = $userModel->where($where)->runOnce();
 
         if(is_null($user))
             return false;
